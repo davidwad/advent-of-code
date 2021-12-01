@@ -1,22 +1,42 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <queue>
 using namespace std;
 
+int queuesum(queue<int> q, int skip) {
+    int sum = 0;
+    int depth;
+    for (int i = 0; i < 4; i++) {
+        depth = q.front();
+        q.pop();
+        if (i != skip) {
+            sum += depth;
+        }
+    }
+    return sum;
+}
+
 int main() {
-    string lastDepth;
-    string currDepth;
-    int increases;
+    queue<int> depths;
+    int increases = 0;
+    string depth;
+    int lastsum;
+    int currsum;
     ifstream inp ("input.txt");
     int i = 0;
-    getline(inp, lastDepth);
-    while ( getline(inp, currDepth) ) {
-        if (stoi(currDepth, nullptr) > stoi(lastDepth, nullptr)) {
-            increases++;
+    while (getline(inp, depth)) {
+        depths.push(stoi(depth, nullptr));
+        if (i > 2) {
+            currsum = queuesum(depths, 0);
+            lastsum = queuesum(depths, 3);
+            if(currsum > lastsum) {
+                increases++;
+            }
+            depths.pop();
         }
-        lastDepth = currDepth;
+        i++;
     }
-    string str = to_string(increases);
-    cout << str << '\n';
-
+    string result = to_string(increases);
+    cout << result << '\n';
 }
