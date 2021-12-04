@@ -164,17 +164,31 @@ int main() {
     //printBoards(trackers);
 
     int k = 0;
-    while (true) {
+    int numboards = boards.size();
+    int i;
+    while (numboards > 1) {
+        i = 0;
         trackers = registerNumber(trackers, boards, numbers.at(k));
-        for (int i = 0; i < boards.size(); i++) {
-            tracker = trackers.at(i);
-            if (checkBingo(tracker)) {
-                board = boards.at(i);
-                cout << "Bingo: " << to_string(calculateScore(tracker, board, numbers.at(k))) << '\n';
-                exit(EXIT_SUCCESS);
+        while (i < numboards) {
+            if (checkBingo(trackers.at(i))) {
+                trackers.erase(trackers.begin() + i);
+                boards.erase(boards.begin() + i);
+                i--;
             }
+            numboards = boards.size();
+            i++;
         }
         k++;
     }
-
+    while (true) {
+        trackers = registerNumber(trackers, boards, numbers.at(k));
+        printBoard(trackers.at(0));
+        if(checkBingo(trackers.at(0))) {
+            break;
+        } else {
+            k++;
+        }
+    }
+    cout << k << '\n';
+    cout << to_string(calculateScore(trackers.at(0), boards.at(0), numbers.at(k))) << '\n';
 }
