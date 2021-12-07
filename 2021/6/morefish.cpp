@@ -57,7 +57,6 @@ void print_cache(unsigned long int** cache, int maxtimer, int totaldays) {
 }
 
 int main() {
-    auto start = std::chrono::high_resolution_clock::now();
     const int inputlen = 300;
     const int totaldays = 256;
     const int maxtimer = 8;
@@ -68,11 +67,14 @@ int main() {
     getline(input, line);
     parse_input(fish, line);
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     unsigned long int** cache = new unsigned long int*[maxtimer+1];
     for (int i = 0; i < maxtimer+1; i++) {
         cache[i] = new unsigned long int[totaldays+1];
     }
     init_cache(cache, maxtimer+1, totaldays+1);
+
     unsigned long int sum = 0;
     for (int i = 0; i < inputlen; i++) {
         sum += growth(cache, fish[i], totaldays);
