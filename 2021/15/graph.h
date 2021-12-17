@@ -6,7 +6,7 @@ class Vertex {
         int iloc;
         int jloc;
         Vertex* pred;
-        int d = __INT32_MAX__;
+        int d = __INT32_MAX__/2;
         Vertex();
         Vertex(int i, int j);
         bool operator==(const Vertex& v);

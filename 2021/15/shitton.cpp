@@ -12,23 +12,12 @@
 using namespace std;
 
 
-class VertexCmp {
+class VertexQCmp {
     public:
         bool operator() (const Vertex v1, const Vertex v2) const {
-            return (v1.d > v2.d);
+            return v1.d > v2.d;
         }
 };
-
-class VertexMapCmp {
-    public:
-        bool operator() (const Vertex& v1, const Vertex& v2) const {
-            return (v1.d > v2.d);
-        }
-};
-
-bool mapcomp (const Vertex v1, const Vertex v2) {
-    return (v1.d > v2.d);
-}
 
 bool inside_grid(int i, int j, int gridsize) {
     return i >= 0 && j >= 0 && i < gridsize && j < gridsize;
@@ -41,19 +30,13 @@ bool exists(Vertex vertex, list<Vertex> vertices) {
     return false;
 }
 
-// bool valid(Vertex v, map<Vertex,int,bool(*)(Vertex,Vertex)> min) {
-//     int minval = min[v];
-//     if (minval < v.d) { return false; }
-//     return true;
-// }
-
-// void update_min(Vertex v, map<Vertex,int,bool(*)(Vertex,Vertex)>* min) {
-//     auto p = min->insert(pair<Vertex,int>(v, v.d));
-//     if (!p.second) {
-//         //*p.first = pair<Vertex,int>(v,v.d);
-//         p.first->second = v.d;
-//     }
-// }
+int transform(int w, int gi, int gj) {
+    for (int k = 0; k < gi+gj; k++) {
+        w = (w + 1) % 10;
+        if (w == 0) { w = 1; }
+    }
+    return w;
+}
 
 void print_vertex(Vertex v) {
     cout << v.iloc << ',' << v.jloc << ',' << v.d << '\n';
@@ -70,13 +53,11 @@ void print_graph(Graph G) {
     }
 }
 
-
-
-set<Vertex> dijkstra(Graph G, Vertex s, Vertex t) {
-    set<Vertex> S;
-    priority_queue<Vertex,vector<Vertex>,VertexCmp> Q;
-    bool(*fn_pt)(Vertex,Vertex) = mapcomp;
-    map<Vertex,int,bool(*)(Vertex,Vertex)> min (fn_pt);
+list<Vertex> dijkstra(Graph G, Vertex s, Vertex t, int gridsize) {
+    list<Vertex> S;
+    int done[gridsize][gridsize] = {0};
+    priority_queue<Vertex,vector<Vertex>,VertexQCmp> Q;
+    int old[gridsize][gridsize] = {INT32_MAX};
 
     for (Vertex v : G.vertices) {
         if (v == s) {
@@ -88,27 +69,18 @@ set<Vertex> dijkstra(Graph G, Vertex s, Vertex t) {
     while (!Q.empty()) {
         cout << n << '\n';
         Vertex u = Q.top();
-        if (u == t) { break; }
         Q.pop();
-        while (!valid(u, min) && !Q.empty()) {
-            u = Q.top();
-            Q.pop();
-        }
-        S.insert(u);
+        S.push_back(u);
+        if (u == t) { break; }
+        done[u.iloc][u.jloc] = 1;
         for (Edge e : G.neighb_edges(u)) {
             Vertex* v = e.end;
             int w = e.weight;
-            if (S.find(*v) != S.end()) {
+            if (!done[v->iloc][v->jloc]) {
                 if (u.d + w < v->d) {
                     v->d = u.d + w;
                     v->pred = &u;
                     Q.push(*v);
-                    update_min(*v, &min);
-                    // auto p = min->insert(pair<Vertex,int>(v, v.d));
-                    // if (!p.second) {
-                    //     //*p.first = pair<Vertex,int>(v,v.d);
-                    //     p.first->second = v.d;
-                    // }
                 }
             }
 
@@ -120,19 +92,38 @@ set<Vertex> dijkstra(Graph G, Vertex s, Vertex t) {
 
 
 int main() {
-    const int gridsize = 100;
+    const int subsize = 100;
+    const int gridsize = subsize * 5;
 
     ifstream input("input.txt");
     string line;
+    int subweights[subsize][subsize];
     int weights[gridsize][gridsize];
     vector<vector<Vertex>> vertices;
     Graph G;
 
-    for (int i=0; i<gridsize; i++) {
+    for (int i=0; i<subsize; i++) {
         getline(input, line);
+        for (int j=0; j<subsize; j++) {
+            subweights[i][j] = line[j] - '0';
+        }
+    }
+
+    for (int gi=0; gi<5; gi++) {
+        for (int gj=0; gj<5; gj++) {
+            for (int i=0; i<subsize; i++) {
+                for (int j=0; j<subsize; j++) {
+                    int iloc = gi*subsize + i;
+                    int jloc = gj*subsize + j;
+                    weights[iloc][jloc] = transform(subweights[i][j], gi, gj);
+                }
+            }
+        }
+    }
+
+    for (int i=0; i<gridsize; i++) {
         vector<Vertex> vrow;
         for (int j=0; j<gridsize; j++) {
-            weights[i][j] = line[j] - '0';
             Vertex v(i, j);
             vrow.push_back(v);
             G.add_vertex(v);
@@ -158,7 +149,7 @@ int main() {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    set<Vertex> S = dijkstra(G, vertices.at(0).at(0), vertices.at(gridsize-1).at(gridsize-1));
+    list<Vertex> S = dijkstra(G, vertices.at(0).at(0), vertices.at(gridsize-1).at(gridsize-1), gridsize);
 
     Vertex dest;
     for (Vertex v : S) {
