@@ -4,20 +4,26 @@
 #include <string>
 #include <list>
 #include <vector>
+#include <cmath>
 #include <chrono>
 using namespace std;
 
+/*
+xdot_min = 2 * sqrt(x_min)
+xdot_max = x_max + 1;
+start from ydot=1.
+end when overshooting.
+*/
 
 class Probe {
     public:
-        int xpos;
-        int ypos;
+        int xpos = 0;
+        int ypos = 0;
         int xvel;
         int yvel;
+        int steps = 0;
 
-        Probe(int x, int y, int xv, int yv) {
-            xpos = x;
-            ypos = y;
+        Probe(int xv, int yv) {
             xvel = xv;
             yvel = yv;
         }
@@ -30,11 +36,96 @@ class Probe {
         }
 
         bool passed_target(int xmax, int ymin) {
-            return (xpos > xmax || ypos < ymin);
+            return xpos > xmax || ypos < ymin;
+        }
+
+        bool overshoot(int xmax, int ymax) {
+            return xpos > xmax && ypos > ymax;
+        }
+
+        bool undershoot(int xmin, int ymin) {
+            return xpos < xmin && ypos < ymin;
+        }
+
+        bool inside_target(int xrange[2], int yrange[2]) {
+            return xpos <= xrange[1] && xpos >= xrange[0] && ypos <= yrange[1] && ypos >= yrange[0];
+        }
+
+        void simulate(int xrange[2], int yrange[2]) {
+            while (!(inside_target(xrange, yrange) || passed_target(xrange[1], yrange[0]))) {
+                // cout << xpos << ',' << ypos << '\n';
+                update();
+                steps++;
+            }
         }
 
 };
 
+bool valid_ydot(int ydot, int ymin, int ymax) {
+    int step = 1;
+    while (true) {
+        int alpha = ydot - (step * step + step)/2;
+        if (!(ymin <= alpha && alpha <= ymax)) { return true; }
+        if (alpha > ymax) { return false; }
+        step++;
+    }
+}
+
+int highest(int xrange[2], int yrange[2]) {
+    int xmin = xrange[0];
+    int xmax = xrange[1];
+    int ymin = yrange[0];
+    int ymax = yrange[1];
+
+    int xdot_min = (int) sqrt(2 * xmin); 
+    int xdot_max = xmax;
+    
+    int highest = 0;
+
+    for (int xdot=xdot_min; xdot<=xdot_max; xdot++) {
+        int ydot = 1;
+        while (true) {
+            Probe p(xdot, ydot);
+            p.simulate(xrange, yrange);
+            if (p.inside_target(xrange, yrange)) {
+                if (ydot > highest) {
+                    highest = ydot;
+                }
+            //} else if (p.overshoot(xmax, ymax) || p.undershoot(xmin, ymin)) {
+            } else if (ydot > 10000) {
+                //cout << p.xpos << ',' << p.ypos << '\n';
+                break;
+            }
+            ydot++;
+        }
+    }
+    return highest;
+}
+
+// int highest(int xrange[2], int yrange[2]) {
+//     int xmin = xrange[0];
+//     int xmax = xrange[1];
+//     int ymin = yrange[0];
+//     int ymax = yrange[1];
+//     int highest = 0;
+
+//     for (int xdot=1; xdot <= xmax; xdot++) {
+//         int ydot = 1;
+//         while (true) {
+//             int step = 0;
+//             while (true) {
+//                 int alpha = ydot - (step*step + step)/2;
+//                 if (ymin <= alpha && alpha <= ymax) {
+//                     if (ydot > highest) {
+//                         highest = ydot;
+//                     } 
+//                 }
+//             }
+//             ydot++;
+//         }
+//         xdot++;
+//     }
+// }
 
 vector<int> read_input(string line) {
     vector<int> ranges;
@@ -77,10 +168,7 @@ void print_target(int xrange[2], int yrange[2]) {
 }
 
 int main() {
-    const int subsize = 100;
-    const int gridsize = subsize * 5;
-
-    ifstream input("exampleinput.txt");
+    ifstream input("input.txt");
     string line;
     int xrange[2];
     int yrange[2];
@@ -96,13 +184,14 @@ int main() {
     //     cout << r << '\n';
     // }
 
-    print_target(xrange, yrange);
+    //print_target(xrange, yrange);
     auto start = std::chrono::high_resolution_clock::now();
 
-    for (int yvel=10; y >)
+    int ymax = highest(xrange, yrange);
+
     auto elapsed = std::chrono::high_resolution_clock::now() - start;
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 
-    //cout << dest.d << '\n';
+    cout << ymax << '\n';
     cout << "Execution time: " << microseconds << '\n';
 }
