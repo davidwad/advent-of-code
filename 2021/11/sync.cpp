@@ -48,13 +48,18 @@ void increment(int** grid) {
     }
 }
 
-void reset_grids(int** grid, int** flashed) {
+int reset_grids(int** grid, int** flashed) {
+    int flashes = 0;
     for (int i=0; i<10; i++) {
         for (int j=0; j<10; j++) {
-            if (grid[i][j] > 9) { grid[i][j] = 0; }
+            if (grid[i][j] > 9) {
+                grid[i][j] = 0;
+                flashes++;
+            }
             flashed[i][j] = 0;
         }
     }
+    return flashes;
 }
 
 void print_grid(int** grid) {
@@ -90,10 +95,8 @@ int main() {
     auto start = std::chrono::high_resolution_clock::now();
 
     // loop and set energy > 9 to 0
-    for (int i=0; i<steps; i++) {
-        cout << i << '\n';
-        // Reset grid
-        reset_grids(grid, flashed);
+    int i = 0;
+    while (reset_grids(grid, flashed) < gridsize * gridsize) {
 
         // Increment
         increment(grid);
@@ -102,11 +105,12 @@ int main() {
         while (flashing(grid, flashed)) {
             flashes += flash(grid, flashed);
         }
+        i++;
     }
 
     auto elapsed = std::chrono::high_resolution_clock::now() - start;
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 
-    cout << flashes << '\n';
+    cout << i << '\n';
     cout << "Execution time: " << microseconds << '\n';
 }
