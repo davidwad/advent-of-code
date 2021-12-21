@@ -12,14 +12,11 @@ void add_bits(unsigned int n, vector<int>& bits) {
     for (int i = 3; i >= 0; i--) {
         int k = n >> i;
         if (k & 1) {
-            //cout << "1";
             bits.push_back(1);
         } else {
-            //cout << "0";
             bits.push_back(0);
         }
     }
-    //cout << '\n';
 }
 
 string read_bits(std::vector<int>::iterator& it, int n) {
@@ -28,11 +25,10 @@ string read_bits(std::vector<int>::iterator& it, int n) {
         str.push_back(*it + '0');
         it++;
     }
-    //return stoi(bits, nullptr, 2);
     return str;
 }
 
-int read_literal(std::vector<int>::iterator& it, int& counter) {
+long int read_literal(std::vector<int>::iterator& it, int& counter) {
     string str;
     int cont = 1;
     while (cont) {
@@ -40,45 +36,44 @@ int read_literal(std::vector<int>::iterator& it, int& counter) {
         str.append(read_bits(it, 4));
         counter += 5;
     }
-    // while (counter % 4 != 0) {
-    //     read_bits(it, 1);
-    //     counter++;
-    // }
-    return stoi(str, nullptr, 2);
+    return stol(str, nullptr, 2);;
 }
 
-void print(string desc, int value) {
+void print(int level, string desc, int value) {
+    for (int i = 0; i < level; i++) {
+        cout << "  ";
+    }
     cout << desc << ": " << value << '\n';
 }
 
-int read_packet(std::vector<int>::iterator& it, int& vsum) {
+int read_packet(std::vector<int>::iterator& it, int& vsum, int level) {
     int length = 0;
-    cout << "-------------------------------" << '\n';
+    cout << "--------------------------------------------------------------" << '\n';
 
     int version = stoi(read_bits(it, 3), nullptr, 2);
     vsum += version;
     length += 3;
-    print("Version", version);
+    print(level, "Version", version);
 
     int type_id = stoi(read_bits(it, 3), nullptr, 2);
     length += 3;
-    print("Type ID", type_id);
+    print(level, "Type ID", type_id);
 
     if (type_id == 4) {
-        print("Literal", read_literal(it, length));
+        print(level, "Literal", read_literal(it, length));
     } else {
         int length_type_id = stoi(read_bits(it, 1), nullptr, 2);
         length += 1;
-        print("Length type ID", length_type_id);
+        print(level, "Length type ID", length_type_id);
 
         if (length_type_id == 0) {
             int sub_length = stoi(read_bits(it, 15), nullptr, 2);
             length += 15;
-            print("Sub length", sub_length);
+            print(level, "Sub length", sub_length);
 
             int counter = 0;
             while (counter < sub_length) {
-                counter += read_packet(it, vsum);
+                counter += read_packet(it, vsum, level + 1);
             }
             if (counter != sub_length) {
                 cout << '\n' << "WRONG COUNTER" << '\n';
@@ -88,9 +83,9 @@ int read_packet(std::vector<int>::iterator& it, int& vsum) {
         } else {
             int sub_packets = stoi(read_bits(it, 11), nullptr, 2);
             length += 11;
-            print("Sub packets", sub_packets);
+            print(level, "Sub packets", sub_packets);
             for (int i = 0; i < sub_packets; i++) {
-                length += read_packet(it, vsum);
+                length += read_packet(it, vsum, level + 1);
             }
         }
     }
@@ -102,6 +97,7 @@ int main() {
     string line;
     vector<int> bits;
     int vsum = 0;
+    int level = 0;
 
     getline(input, line);
 
@@ -116,12 +112,12 @@ int main() {
     auto start = std::chrono::high_resolution_clock::now();
 
     auto it = bits.begin();
-    read_packet(it, vsum);
+    read_packet(it, vsum, level);
 
     auto elapsed = std::chrono::high_resolution_clock::now() - start;
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 
-    cout << "-------------------------------" << '\n';
-    print("Version sum", vsum);
-    print("Execution time", microseconds);
+    cout << "--------------------------------------------------------------" << '\n';
+    print(level, "Version sum", vsum);
+    print(level, "Execution time", microseconds);
 }
