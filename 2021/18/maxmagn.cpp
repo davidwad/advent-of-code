@@ -177,40 +177,45 @@ int main() {
     const int maxdepth = 4;
     ifstream input("input.txt");
     string line;
+    vector<string> lines;
     Pair p;
-    int magnitude_;
+    int maxmagn = 0;
+
+    while (getline(input, line)) {
+        lines.push_back(line);
+    }
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    getline(input, line);
-    p = parse_string(line, nullptr);
-    while (getline(input, line)) {
-        p = pairsum(p, parse_string(line, nullptr));
-        print_pair(p);
-        cout << '\n';
-        bool exploded = true;
-        bool split = true;
-        while (exploded || split) {
-            exploded = true;      
-            split = false;
-            while (exploded) {
-                exploded = false;
-                find_explosions(&p, &p, maxdepth, 0, exploded);
+    for (string line1 : lines) {
+        for (string line2 : lines) {
+            if (line1 == line2) { continue; }
+            Pair p1 = parse_string(line1, nullptr);
+            Pair p2 = parse_string(line2, nullptr);
+            Pair p = pairsum(p1, p2);
+            bool exploded = true;
+            bool split = true;
+            while (exploded || split) {
+                exploded = true;      
+                split = false;
+                while (exploded) {
+                    exploded = false;
+                    find_explosions(&p, &p, maxdepth, 0, exploded);
+                }
+                if (!exploded) {
+                    vector<Pair*> regs;
+                    sort_regulars(&p, regs);
+                    split = find_splits(regs);
+                }
             }
-            if (!exploded) {
-                vector<Pair*> regs;
-                sort_regulars(&p, regs);
-                split = find_splits(regs);
-            }
+            int m = magnitude(&p);
+            if (m > maxmagn) { maxmagn = m; }
         }
-        print_pair(p);
-        cout << '\n';
     }
-    magnitude_ = magnitude(&p);
 
     auto elapsed = std::chrono::high_resolution_clock::now() - start;
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 
-    cout << magnitude_ << '\n';
+    cout << maxmagn << '\n';
     cout << "Execution time: " << microseconds << '\n';
 }
