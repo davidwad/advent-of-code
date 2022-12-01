@@ -8,7 +8,6 @@
 #include <chrono>
 using namespace std;
 
-
 class Probe {
     public:
         int xpos = 0;
@@ -42,46 +41,42 @@ class Probe {
 
         void simulate(int xrange[2], int yrange[2]) {
             while (!(inside_target(xrange, yrange) || passed_target(xrange[1], yrange[0]))) {
-                // cout << xpos << ',' << ypos << '\n';
                 update();
             }
         }
 
 };
 
-int highest(int xrange[2], int yrange[2]) {
-    int highest = 0;
-    int alpha;
-    int beta;
+int hits(int xrange[2], int yrange[2]) {
+    int hits = 0;
 
     int x_min = xrange[0];
     int x_max = xrange[1];
     int y_min = yrange[0];
     int y_max = yrange[1];
 
-    int xdot_min = (int)(sqrt((double)x_min + 1/4) - 1/2); 
+    int xdot_min = (int)(sqrt((double)x_min + 1/4) - 1/2);
     int xdot_max = x_max;
-    //cout << xdot_min << ',' << xdot_max << '\n';
 
     for (int xdot=xdot_min; xdot<=xdot_max; xdot++) {
 
-        int ydot_min = 1 - y_max;
+        int ydot_min = y_min;
         int ydot_max = 1 - y_min;
 
         for (int ydot = ydot_min; ydot<=ydot_max; ydot++) {
             
             Probe p(xdot, ydot);
             p.simulate(xrange, yrange);
-            //cout << xdot << ',' << ydot << ": ";
+            // cout << xdot << ',' << ydot << ": ";
             if (p.inside_target(xrange, yrange)) {
                 //cout << "hit" << '\n';
-                if (p.ymax > highest) {
-                    highest = p.ymax;
-                }
-            } 
+                hits++;
+            } else {
+               // cout << "miss" << '\n';
+            }
         }
     }
-    return highest;
+    return hits;
 }
 
 
@@ -140,11 +135,11 @@ int main() {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    int y_max = highest(xrange, yrange);
+    int nhits = hits(xrange, yrange);
 
     auto elapsed = std::chrono::high_resolution_clock::now() - start;
     long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 
-    cout << y_max << '\n';
+    cout << nhits << '\n';
     cout << "Execution time: " << microseconds << '\n';
 }
