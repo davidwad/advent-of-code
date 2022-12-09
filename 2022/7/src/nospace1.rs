@@ -13,88 +13,55 @@ use std::io::{BufRead, BufReader};
 
 pub fn nospace_1() {
     let mut dir_sizes: HashMap<String, u32> = HashMap::new();
-    let mut dir_contents: HashMap<Vec<String>, u32> = HashMap::new();
-    let mut n_dirs: usize = 0;
-    let mut lines: Vec<String> = Vec::new();
-    let mut buff_reader = BufReader::new(fs::File::open("example.txt").expect("Failed to open file!"));
-    let mut line = String::new();
-
+    let mut dir_contents: HashMap<String, Vec<String>> = HashMap::new();
+    // let mut n_dirs: usize = 0;
+    let buff_reader = BufReader::new(fs::File::open("example.txt").expect("Failed to open file!"));
+    let mut dir_name: String =  String::new();
+    let mut content: Vec<String> = Vec::new();
+    let mut line_idx: u32 = 0;
     for line in buff_reader.lines() {
         let parsed: String = line.expect("Failed to parse line!");
         if parsed.contains("$ cd ") {
-            n_dirs += 1;
+            if !parsed.contains(" ..") {
+                if line_idx != 0 {
+                    dir_contents.insert(dir_name, content);
+                    content = Vec::new();
+                }
+                let mut split = parsed.split_whitespace();
+                split.next();
+                split.next();
+                dir_name = split.next().expect("Failed to split line!").parse::<String>().expect("Failed to parse string!");
+                // n_dirs += 1;
+            }
+        } else if !parsed.contains("$ ls") {
+            content.push(parsed);
         }
-        lines.push(parsed);
+        line_idx += 1;
+    }
+    dir_contents.insert(dir_name, content);
+
+    for k in dir_contents.keys() {
+        dir_sizes.insert(k.to_string(), 0);
     }
 
-    let mut dir_name = String::new();
-    let mut content: Vec<String> = Vec::new();
-    for line in &lines {
-        if line.contains("$ cd ") {
-            
-            if !line.contains(" ..") {
-                dir_name = line.split_whitespace().next().expect("Failed to split line").parse::<String>().expect("Failed to parse string!");
-            }
-        } else {
-            if !line.contains("$ ls") {
-                // if line.contains("dir ") {
+    dir_size(&dir_sizes, &dir_contents, String::from("/"));
 
-                // } else {
-                //     let file_size
-                // }
-            }
-        }
-    }
-
-    // while dir_sizes.len() < n_dirs {
-    //     let mut dir_name = String::new();
-    //     for line in &lines {
-    //         if line.contains("$ cd ") {
-    //             if !line.contains(" ..") {
-    //                 dir_name = line.split_whitespace().next().expect("Failed to split line").parse::<String>().expect("Failed to parse string!");
-    //             }
-    //         } else {
-    //             if !line.contains("$ ls") {
-    //                 if line.contains("dir ") {
-
-    //                 } else {
-    //                     let file_size
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
-    // loop {
-    //     let num_bytes = buff_reader.read_line(&mut line).expect("Failed to read input!");
-    //     // let parsed: String = line.trim().parse().expect("Failed to parse line!");
-    //     line = line.trim().parse().expect("Failed to parse line!");
-    //     if num_bytes == 0 {
-    //         break;
-    //     } else {
+    // for (name, content) in dir_contents.iter() {
+    //     println!("Contents of dir {}:", name);
+    //     for line in content {
     //         println!("{}", line);
     //     }
-    //     // if parsed[0..2].eq("dir") {
-    //     //     n_dirs += 1;
-    //     // }
-        
-    //     // lines.push(parsed);
+    //     println!("----------------------------------");
     // }
-    
-    // for line in lines {
-    //     if line[0..1].eq("cd") {
-    //         let split = line.split_whitespace();
-    //         split.next();
-    //         let dir_name = split.next().expect("Dir name is None!");
-    //         if dir_name != ".." {
 
-    //         }
-    //     }
-
-    // }
-    println!("{}", n_dirs)
+    //println!("{}", n_dirs)
 }
 
-fn dir_size(dir_sizes: &HashMap<String, u32>, lines: Vec<String>) {
-
+fn dir_size(dir_sizes: &HashMap<String, u32>, dir_contents: &HashMap<String, Vec<String>>, dir_name: String) {
+    let mut contents = dir_contents.get(&dir_name).expect("Key not found in hashmap!");
+    for line in contents {
+        if line.contains("dir ") {
+            dir_size(&dir_sizes, &dir_contents, dir_name);
+        }
+    }
 }
