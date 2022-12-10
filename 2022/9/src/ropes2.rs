@@ -1,60 +1,61 @@
+use std::collections::HashMap;
 use std::fs;
 use std::io::{BufRead, BufReader};
 
 pub fn ropes_2() {
     let buff_reader = BufReader::new(fs::File::open("input.txt").expect("Failed to open file!"));
-    let mut max_score: u32 = 0;
-    let mut rows: Vec<Vec<u32>> = Vec::new();
-    let mut cols: Vec<Vec<u32>> = Vec::new();
+    const N_PARTS: usize = 10;
+    let mut visited: HashMap<(i32, i32), bool> = HashMap::new();
+    let mut rope_coords: Vec<(i32, i32)> = Vec::new();
+
+    for _ in 0..N_PARTS {
+        rope_coords.push((0, 0));
+    }
 
     for line in buff_reader.lines() {
         let parsed: String = line.expect("Failed to parse line!").trim().parse().expect("Failed to parse line!");
-        let mut digits: Vec<u32> = Vec::new();
-        for c in parsed.chars() {
-            digits.push(c.to_digit(10).expect("Failed to parse char as digit!"))
-        }
-        rows.push(digits);
-    }
+        let mut split = parsed.split_whitespace();
+        let direction: char = split.next().expect("Iterator out of bounds!").chars().next().expect("Failed to parse char!");
+        let steps: i32 = split.next().expect("Iterator out of bounds!").parse().expect("Failed to parse string as u32!");
 
-    let n_rows = rows.len();
-    let n_cols = rows[0].len();
-
-
-    for col_idx in 0..n_cols {
-        let mut col: Vec<u32> = Vec::new();
-        for row_idx in 0..n_rows {
-            col.push(rows[row_idx][col_idx]);
-        }
-        cols.push(col);
-    }
-
-    for row_idx in 0..n_rows {
-        for col_idx in 0..n_cols {
-            let height = rows[row_idx][col_idx];
-            let mut left_view = rows[row_idx][0..col_idx].to_vec();
-            left_view.reverse();
-            let left_score = score(height, left_view);
-            let right_score = score(height, rows[row_idx][col_idx+1..n_cols].to_vec());
-            let mut top_view = cols[col_idx][0..row_idx].to_vec();
-            top_view.reverse();
-            let top_score = score(height, top_view);
-            let bottom_score = score(height, cols[col_idx][row_idx+1..n_rows].to_vec());
-
-            let total_score = left_score * right_score * top_score * bottom_score;
-            if  total_score > max_score {
-                max_score = total_score;
+        for _ in 0..steps {
+            let mut head_coords = rope_coords[0];
+            match direction {
+                'U' => head_coords.1 += 1,
+                'R' => head_coords.0 += 1,
+                'D' => head_coords.1 -= 1,
+                'L' => head_coords.0 -= 1,
+                _ => panic!("Unexpected char!")
             }
+            rope_coords[0] = head_coords;
+            for i in 0..(rope_coords.len() - 1) {
+                let head_coords = rope_coords[i];
+                let tail_coords = rope_coords[i+1];
+                let new_tail_coords = calc_tail_coords(head_coords, tail_coords);
+                rope_coords[i+1] = new_tail_coords;
+            }
+            visited.insert(rope_coords[rope_coords.len() - 1], true);
         }
     }
 
-    println!("{}", max_score);
+    println!("{}", visited.len());
 }
 
-fn score(height: u32, heights: Vec<u32>) -> u32 {
-    for (i, h) in heights.iter().enumerate() {
-        if h >= &height {
-            return i as u32 + 1;
-        }
+fn calc_tail_coords(head_coords: (i32, i32), tail_coords: (i32, i32)) -> (i32, i32) {
+    let dx: i32 = head_coords.0 - tail_coords.0;
+    let dy: i32 = head_coords.1 - tail_coords.1;
+    
+    if dx.abs() > 1 && dy == 0 { // Horizontally straight
+        return (tail_coords.0 + dx / 2, tail_coords.1);
+    } else if dx == 0 && dy.abs() > 1 { // Vertically straight
+        return (tail_coords.0, tail_coords.1 + dy / 2);
+    } else if dx.abs() == 2 && dy.abs() == 1 { // Horizontally diagonal
+        return (tail_coords.0 + dx / 2, tail_coords.1 + dy);
+    } else if dx.abs() == 1 && dy.abs() == 2 { // Vertically diagonal
+        return (tail_coords.0 + dx, tail_coords.1 + dy / 2);
+    } else if dx.abs() == 2 && dy.abs() == 2 { // Two steps diagonal
+        return (tail_coords.0 + dx / 2, tail_coords.1 + dy / 2);
+    } else { // Don't need to move
+        return tail_coords;
     }
-    return heights.len() as u32;
 }

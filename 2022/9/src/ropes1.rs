@@ -4,7 +4,6 @@ use std::io::{BufRead, BufReader};
 
 pub fn ropes_1() {
     let buff_reader = BufReader::new(fs::File::open("input.txt").expect("Failed to open file!"));
-    let mut n_visited: u32 = 0;
     let mut visited: HashMap<(i32, i32), bool> = HashMap::new();
     let mut head_coords = (0, 0);
     let mut tail_coords = (0, 0);
@@ -25,11 +24,7 @@ pub fn ropes_1() {
             }
             tail_coords = calc_tail_coords(head_coords, tail_coords);
             visited.insert(tail_coords, true);
-            // println!("Head coords: ({0}, {1})", head_coords.0, head_coords.1);
-            // println!("Tail coords: ({0}, {1})", tail_coords.0, tail_coords.1);
-            // println!("---------------------------------------");
         }
-
     }
 
     println!("{}", visited.len());
