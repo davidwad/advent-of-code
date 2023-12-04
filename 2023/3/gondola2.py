@@ -8,6 +8,7 @@ class SchematicNumber:
     value: int
     indexes: list[tuple[int, int]]
 
+
 def adjacent_numbers(gear: tuple[int, int], numbers: list[SchematicNumber]) -> list[int]:
     adjacent_numbers = set()
     y = gear[0]
@@ -20,6 +21,7 @@ def adjacent_numbers(gear: tuple[int, int], numbers: list[SchematicNumber]) -> l
                     adjacent_numbers.add(number.value)
 
     return list(adjacent_numbers)
+
 
 def is_adjacent(gear_index: tuple[int, int], number: SchematicNumber):
     for index in number.indexes:
@@ -47,7 +49,7 @@ for i, line in enumerate(lines):
 
     for j, char in enumerate(line):
         if char.isdigit():
-            schematic[i,j] = int(char)
+            schematic[i, j] = int(char)
         elif char == '*':
             gears.append((i, j))
 
