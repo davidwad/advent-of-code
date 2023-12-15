@@ -23,12 +23,10 @@ file = open('input.txt', 'r')
 lines = [line.strip() for line in file.readlines()]
 
 instructions = lines[0]
-# print(instructions)
 
 nodes: dict[str, tuple[str, str]] = {}
 for line in lines[2:]:
     source, left, right = re.match(pattern, line).groups()
     nodes[source] = (left, right)
-    # print(source + ' --> (' + left + ', ' + right + ')')
 
 print(get_steps(instructions, nodes))
