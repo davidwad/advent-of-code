@@ -4,16 +4,16 @@ import networkx as nx
 
 
 def can_go_left(i: int, j: int, map: list[list[str]]) -> bool:
-    return j > 0 and (map[i][j-1] == '-' or map[i][j-1] == 'F' or map[i][j-1] == 'L')
+    return j > 0 and (map[i][j-1] == '-' or map[i][j-1] == 'F' or map[i][j-1] == 'L' or map[i][j-1] == 'S')
 
 def can_go_right(i: int, j: int, map: list[list[str]]) -> bool:
-    return j < len(map[0]) - 1 and (map[i][j+1] == '-' or map[i][j+1] == '7' or map[i][j+1] == 'J')
+    return j < len(map[0]) - 1 and (map[i][j+1] == '-' or map[i][j+1] == '7' or map[i][j+1] == 'J' or map[i][j+1] == 'S')
 
 def can_go_down(i: int, j: int, map: list[list[str]]) -> bool:
-    return i < len(map) - 1 and (map[i+1][j] == '|' or map[i+1][j] == 'L' or map[i+1][j] == 'J')
+    return i < len(map) - 1 and (map[i+1][j] == '|' or map[i+1][j] == 'L' or map[i+1][j] == 'J' or map[i+1][j] == 'S')
 
 def can_go_up(i: int, j: int, map: list[list[str]]) -> bool:
-    return i > 0 and (map[i-1][j] == '|' or map[i-1][j] == '7' or map[i-1][j] == 'F')
+    return i > 0 and (map[i-1][j] == '|' or map[i-1][j] == '7' or map[i-1][j] == 'F' or map[i-1][j] == 'S')
 
 
 def print_dist(dist: list[list[int]]):
@@ -44,7 +44,8 @@ for i, line in enumerate(lines):
     chars = []
     dist_row = []
     for j, char in enumerate(line):
-        graph.add_node((i, j))
+        if char != '.':
+            graph.add_node((i, j))
         chars.append(char)
         dist_row.append(sys.maxsize)
     map.append(chars)
@@ -56,6 +57,18 @@ for i, line in enumerate(lines):
     for j, char in enumerate(line):
         if char == 'S':
             start = (i, j)
+            # Left
+            if can_go_left(i, j, map):
+                graph.add_edge((i, j), (i, j-1))
+            # Right
+            if can_go_right(i, j, map):
+                graph.add_edge((i, j), (i, j+1))
+            # Up
+            if can_go_up(i, j, map):
+                graph.add_edge((i, j), (i-1, j))
+            # Down
+            if can_go_down(i, j, map):
+                graph.add_edge((i, j), (i+1, j))
         elif char == '-':
             # Left
             if can_go_left(i, j, map):
