@@ -1,4 +1,3 @@
-# TODO: Seems like graph isnt constructed correctly. Not enough edges?
 import sys
 import networkx as nx
 
@@ -16,7 +15,7 @@ def can_go_up(i: int, j: int, map: list[list[str]]) -> bool:
     return i > 0 and (map[i-1][j] == '|' or map[i-1][j] == '7' or map[i-1][j] == 'F' or map[i-1][j] == 'S')
 
 
-def print_dist(dist: list[list[int]]):
+def print_distance_map(dist: list[list[int]]):
     for row in dist:
         row_str = ''
         for d in row:
@@ -31,25 +30,25 @@ def print_map(map: list[list[str]]):
         print(''.join(row))
 
 
-file = open('example_input_simple.txt', 'r')
+file = open('example_input_complex.txt', 'r')
 lines = [line.strip() for line in file.readlines()]
 
 n_rows = len(lines)
 n_cols = len(lines[0])
 
 map = []
-dist = []
+distance_map = []
 graph = nx.Graph()
 for i, line in enumerate(lines):
     chars = []
-    dist_row = []
+    distance_row = []
     for j, char in enumerate(line):
         if char != '.':
             graph.add_node((i, j))
         chars.append(char)
-        dist_row.append(sys.maxsize)
+        distance_row.append(sys.maxsize)
     map.append(chars)
-    dist.append(dist_row)
+    distance_map.append(distance_row)
 
 sum = 0
 for i, line in enumerate(lines):
@@ -112,8 +111,31 @@ for i, line in enumerate(lines):
             if can_go_right(i, j, map):
                 graph.add_edge((i, j), (i, j+1))
 
-print(graph)
+distance_map[start[0]][start[1]] = 0
+for neighbor in graph.neighbors(start):
+    distance = 0
+    current = neighbor
+    previous = start
+    while current != start:
+        distance += 1
+        if distance_map[current[0]][current[1]] > distance:
+            distance_map[current[0]][current[1]] = distance
+        candidates = list(graph.neighbors(current))
+        candidates.remove(previous)
+        assert len(candidates) == 1
+        previous = current
+        current = candidates[0]
+
+max_distance = -1
+for row in distance_map:
+    for d in row:
+        if d != sys.maxsize and d > max_distance:
+            max_distance = d
 
 print_map(map)
-print_dist(dist)
-print(start)
+print_distance_map(distance_map)
+print(graph)
+print(max_distance)
+
+# print_dist(dist)
+# print(start)
