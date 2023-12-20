@@ -1,46 +1,7 @@
 # TODO: The functions can_squeeze_x only work if you start on ground, but not while you are squeezing between pipes.
 # Need different logic for when you are on a tile in the main loop
-
+import sys
 import networkx as nx
-
-
-def can_escape(i: int, j: int , loop_edges: list[tuple[tuple[int,int]]], visited: list[list[bool]]) -> bool:
-    # Have we visited before?
-    if visited[i][j]:
-        return False
-    visited[i][j] = True
-    # Are we on the edge of the map?
-    if i == 0 or i == len(visited) - 1 or j == 0 or j == len(visited[0]) - 1:
-        return True
-    can_escape_left = can_squeeze_left(i, j, loop_edges) and can_escape(i, j - 1, loop_edges, visited)
-    can_escape_right = can_squeeze_right(i, j, loop_edges) and can_escape(i, j + 1, loop_edges, visited)
-    can_escape_down = can_squeeze_down(i, j, loop_edges) and can_escape(i + 1, j, loop_edges, visited)
-    can_escape_up = can_squeeze_up(i, j, loop_edges) and can_escape(i - 1, j, loop_edges, visited)
-    return can_escape_left or can_escape_right or can_escape_down or can_escape_up
-
-def can_squeeze_left(i: int, j: int, loop_edges: list[tuple[tuple[int,int]]]) -> bool:
-    up_left = (i - 1, j - 1)
-    left = (i, j - 1)
-    down_left = (i + 1, j - 1)
-    return not ((up_left, left) in loop_edges and (left, down_left) in loop_edges)
-
-def can_squeeze_right(i: int, j: int, loop_edges: list[tuple[tuple[int,int]]]) -> bool:
-    up_right = (i - 1, j + 1)
-    right = (i, j + 1)
-    down_right = (i + 1, j + 1)
-    return not ((up_right, right) in loop_edges and (right, down_right) in loop_edges)
-
-def can_squeeze_down(i: int, j: int, loop_edges: list[tuple[tuple[int,int]]]) -> bool:
-    down_left = (i + 1, j - 1)
-    down = (i + 1, j)
-    down_right = (i + 1, j + 1)
-    return not ((down_left, down) in loop_edges and (down, down_right) in loop_edges)
-
-def can_squeeze_up(i: int, j: int, loop_edges: list[tuple[tuple[int,int]]]) -> bool:
-    up_left = (i - 1, j - 1)
-    up = (i - 1, j)
-    up_right = (i - 1, j + 1)
-    return not ((up_left, up) in loop_edges and (up, up_right) in loop_edges)
 
 
 def can_go_left(i: int, j: int, map: list[list[str]]) -> bool:
@@ -72,7 +33,8 @@ def print_map(map: list[list[str]]):
         print(''.join(row))
 
 
-file = open('example_input_2_simple.txt', 'r')
+s_is_vertical = True
+file = open('input.txt', 'r')
 lines = [line.strip() for line in file.readlines()]
 
 n_rows = len(lines)
@@ -80,17 +42,21 @@ n_cols = len(lines[0])
 
 map = []
 enclosed_map = []
+distance_map = []
 graph = nx.Graph()
 for i, line in enumerate(lines):
     chars = []
     enclosed_row = []
+    distance_row = []
     for j, char in enumerate(line):
         if char != '.':
             graph.add_node((i, j))
         chars.append(char)
         enclosed_row.append(None)
+        distance_row.append(sys.maxsize)
     map.append(chars)
     enclosed_map.append(enclosed_row)
+    distance_map.append(distance_row)
 
 sum = 0
 for i, line in enumerate(lines):
@@ -152,30 +118,37 @@ for i, line in enumerate(lines):
             # Right
             if can_go_right(i, j, map):
                 graph.add_edge((i, j), (i, j+1))
-
-for i in range(len(map)):
-    for j in range(len(map[0])):
-        visited = []
-        for _ in range(len(map)):
-            visited_row = []
-            for _ in range(len(map[0])):
-                visited_row.append(False)
-            visited.append(visited_row)
-        if (i, j) == (6, 2):
-            a = 0
-        if not graph.has_node((i, j)):
-            enclosed_map[i][j] = not can_escape(i, j, list(graph.edges), visited)
+                
+distance_map[start[0]][start[1]] = 0
+for neighbor in graph.neighbors(start):
+    distance = 0
+    current = neighbor
+    previous = start
+    while current != start:
+        distance += 1
+        if distance_map[current[0]][current[1]] > distance:
+            distance_map[current[0]][current[1]] = distance
+        candidates = list(graph.neighbors(current))
+        candidates.remove(previous)
+        assert len(candidates) == 1
+        previous = current
+        current = candidates[0]
 
 n_enclosed = 0
-for row in enclosed_map:
-    for square in row:
-        if square == True:
-            n_enclosed += 1
+for i in range(len(map)):
+    enclosed = False
+    for j in range(len(map[0])):
+        if distance_map[i][j] < sys.maxsize:
+            if map[i][j] in "|JL" or (map[i][j]=="S" and s_is_vertical):
+                enclosed = not enclosed
+        else:
+            n_enclosed += enclosed
+        enclosed_map[i][j] = enclosed
 
 print(n_enclosed)
 
 # print_map(map)
-print_enclosed_map(enclosed_map)
+# print_enclosed_map(enclosed_map)
 # print(graph)
 # print_loop(map, distance_map)
 # print(max_distance)
@@ -184,4 +157,4 @@ print_enclosed_map(enclosed_map)
 # print(start)
 
 # print(list(nx.cycles.simple_cycles(graph)))
-print(list(graph.edges))
+# print(list(graph.edges))
