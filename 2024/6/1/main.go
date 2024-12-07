@@ -79,7 +79,7 @@ func collideLeft(guard Guard, obstacles []Coordinate) (int, bool) {
 }
 
 func main() {
-	fileName := "C:\\Users\\DavidWadmark\\repos\\advent-of-code\\2024\\6\\input.txt"
+	fileName := "C:\\Users\\DavidWadmark\\repos\\advent-of-code\\2024\\6\\1\\input.txt"
 	lines, err := utils.ReadFile(fileName)
 	if err != nil {
 		panic(err)
