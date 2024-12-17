@@ -71,7 +71,11 @@ func hash(p Pos) string {
 	return fmt.Sprintf("%d|%d", p.i, p.j)
 }
 
-func shortestPath(start, end Pos, maze [][]rune, distances map[string]int) (int, map[string]int) {
+func hashDir(p Pos, dir Direction) string {
+	return fmt.Sprintf("%d|%d|%d", p.i, p.j, dir)
+}
+
+func shortestPath(start, end Pos, prio Direction, maze [][]rune, distances map[string]int) (int, map[string]int) {
 	visited := make(map[string]bool)
 	directions := make(map[string]Direction)
 	directions[hash(start)] = Right
@@ -95,7 +99,7 @@ func shortestPath(start, end Pos, maze [][]rune, distances map[string]int) (int,
 
 		cHash := hash(closest)
 		dir := directions[cHash]
-		visited[cHash] = true
+		visited[hashDir(closest, dir)] = true
 
 		//printMazeVisited(maze, visited)
 
@@ -105,52 +109,97 @@ func shortestPath(start, end Pos, maze [][]rune, distances map[string]int) (int,
 
 		// Forward
 		h := hash(forward)
-		_, ok := visited[h]
+		_, ok := visited[hashDir(forward, dir)]
 		od, _ := distances[h]
 		if !ok && od < math.MaxInt {
-			d := min(distances[cHash]+1, od)
-			distances[h] = d
-			heap.Push(&pq, &utils.Item{
-				Value:    forward,
-				Priority: d,
-			})
-			directions[h] = dir
-		}
+			//var d int
+			//if distances[hash(getForward(forward, dir))] == math.MaxInt {
+			//	d = min(distances[cHash]+1001, od)
+			//} else {
+			//	d = min(distances[cHash]+1, od)
+			//}
 
-		// Right
-		h = hash(right)
-		_, ok = visited[h]
-		od, _ = distances[h]
-		if !ok && od < math.MaxInt {
-			d := min(distances[cHash]+1001, od)
-			distances[h] = d
-			heap.Push(&pq, &utils.Item{
-				Value:    right,
-				Priority: d,
-			})
-			directions[h] = (dir + 1) % 4
-		}
-
-		// Left
-		h = hash(left)
-		_, ok = visited[h]
-		od, _ = distances[h]
-		if !ok && od < math.MaxInt {
-			d := min(distances[cHash]+1001, od)
-			distances[h] = d
-			heap.Push(&pq, &utils.Item{
-				Value:    left,
-				Priority: d,
-			})
-			if dir == 0 {
-				directions[h] = 3
-			} else {
-				directions[h] = dir - 1
+			//d := min(distances[cHash]+1, od)
+			d := distances[cHash] + 1
+			if d < od {
+				distances[h] = d
+				heap.Push(&pq, &utils.Item{
+					Value:    forward,
+					Priority: d,
+				})
+				directions[h] = dir
 			}
 
 		}
 
-		//fmt.Println(distances[hash(Pos{7, 4})])
+		// Right
+		h = hash(right)
+		newDir := (dir + 1) % 4
+		_, ok = visited[hashDir(right, newDir)]
+		od, _ = distances[h]
+		if !ok && od < math.MaxInt {
+			d := distances[cHash] + 1001
+			if d < od {
+				distances[h] = d
+				if prio == Left {
+					heap.Push(&pq, &utils.Item{
+						Value:    right,
+						Priority: d + 2000,
+					})
+				} else {
+					heap.Push(&pq, &utils.Item{
+						Value:    right,
+						Priority: d,
+					})
+				}
+				directions[h] = newDir
+			}
+			//d := min(distances[cHash]+1001, od)
+
+		}
+
+		// Left
+		h = hash(left)
+		if dir == 0 {
+			newDir = 3
+		} else {
+			newDir = dir - 1
+		}
+		_, ok = visited[hashDir(left, newDir)]
+		od, _ = distances[h]
+		if !ok && od < math.MaxInt {
+			d := distances[cHash] + 1001
+			if d < od {
+				distances[h] = d
+				if prio == Right {
+					heap.Push(&pq, &utils.Item{
+						Value:    left,
+						Priority: d + 2000,
+					})
+				} else {
+					heap.Push(&pq, &utils.Item{
+						Value:    left,
+						Priority: d,
+					})
+				}
+
+				directions[h] = newDir
+			}
+			//d := min(distances[cHash]+1001, od)
+
+			//if dir == 0 {
+			//	directions[h] = 3
+			//} else {
+			//	directions[h] = dir - 1
+			//}
+
+		}
+
+		//fmt.Println("------------------------------")
+		//pp := Pos{9, 3}
+		//if closest == pp {
+		//	fmt.Print(".")
+		//}
 	}
 }
 
@@ -159,7 +208,15 @@ func shortestPath(start, end Pos, maze [][]rune, distances map[string]int) (int,
 
 func walk(p, end Pos, distances map[string]int, visited map[string]bool, maze [][]rune) {
 	visited[hash(p)] = true
-	//printMazeVisited(maze, visited)
+	//pp := Pos{7, 5}
+	//if p == pp {
+	//	printMazeVisited(maze, visited)
+	//	fmt.Println(distances[hash(Pos{7, 5})])
+	//	fmt.Println(distances[hash(Pos{7, 4})])
+	//	fmt.Println(distances[hash(Pos{8, 5})])
+	//	//fmt.Println()
+	//}
+
 	if p == end {
 		return
 	}
@@ -182,7 +239,7 @@ func walk(p, end Pos, distances map[string]int, visited map[string]bool, maze []
 		d, ok := distances[hash(np)]
 		_, v := visited[hash(np)]
 		if ok {
-			if d == minDist && !v {
+			if (d == minDist || utils.Abs(d-minDist) == 1000) && !v {
 				//fmt.Println(hash(p))
 				walk(np, end, distances, visited, maze)
 			}
@@ -253,7 +310,7 @@ func printMazeVisited(maze [][]rune, visited map[string]bool) {
 }
 
 func main() {
-	fileName := "C:\\Users\\DavidWadmark\\repos\\advent-of-code\\2024\\16\\example.txt"
+	fileName := "C:\\Users\\DavidWadmark\\repos\\advent-of-code\\2024\\16\\input.txt"
 	lines, err := utils.ReadFile(fileName)
 	if err != nil {
 		panic(err)
@@ -287,13 +344,51 @@ func main() {
 		maze = append(maze, row)
 	}
 
-	d, newDists := shortestPath(startPos, endPos, maze, distances)
+	//d, newDists := shortestPath(startPos, endPos, maze, distances)
+	d, dLeft := shortestPath(startPos, endPos, Left, maze, distances)
+	maze = make([][]rune, 0)
+	distances = make(map[string]int)
 
-	visited := make(map[string]bool)
-	walk(endPos, startPos, newDists, visited, maze)
+	idx = 0
+	for i, line := range lines {
+		row := make([]rune, 0)
+		for j, char := range line {
+			row = append(row, char)
+			pos := Pos{i, j}
+			h := hash(pos)
+			switch char {
+			case '.':
+				distances[h] = math.MaxInt / 2
+			case '#':
+				distances[h] = math.MaxInt
+			case 'S':
+				startPos = pos
+			case 'E':
+				distances[h] = math.MaxInt / 2
+				endPos = pos
+			}
+			idx++
+		}
+		maze = append(maze, row)
+	}
+	d, dRight := shortestPath(startPos, endPos, Right, maze, distances)
+
+	visitedLeft := make(map[string]bool)
+	walk(endPos, startPos, dLeft, visitedLeft, maze)
+	visitedRight := make(map[string]bool)
+	walk(endPos, startPos, dRight, visitedRight, maze)
+
+	//fmt.Println(visitedLeft)
+	//fmt.Println(visitedRight)
 
 	//printMazeVisited(maze, visited)
 	fmt.Println(d)
 	//fmt.Println(visited)
-	fmt.Println(len(visited))
+	fmt.Println(len(visitedLeft))
+	fmt.Println(len(visitedRight))
+	//printMazeVisited(maze, visited)
+	//fmt.Println(distances[hash(Pos{7, 5})])
+	//fmt.Println(distances[hash(Pos{7, 4})])
+	//fmt.Println(distances[hash(Pos{8, 5})])
+	//fmt.Println(distances[hash(Pos{8, 3})])
 }
