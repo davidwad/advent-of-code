@@ -71,7 +71,7 @@ func hash(p Pos) string {
 	return fmt.Sprintf("%d|%d", p.i, p.j)
 }
 
-func shortestPath(start, end Pos, maze [][]rune, distances map[string]int) (int, map[string]int, map[string]bool) {
+func shortestPath(start, end Pos, maze [][]rune, distances map[string]int) (int, map[string]int) {
 	visited := make(map[string]bool)
 	directions := make(map[string]Direction)
 	directions[hash(start)] = Right
@@ -90,12 +90,14 @@ func shortestPath(start, end Pos, maze [][]rune, distances map[string]int) (int,
 		closest := heap.Pop(&pq).(*utils.Item).Value.(Pos)
 		if closest == end {
 			//printMazeTrail(maze, directions)
-			return distances[hash(closest)], distances, visited
+			return distances[hash(closest)], distances
 		}
 
 		cHash := hash(closest)
 		dir := directions[cHash]
 		visited[cHash] = true
+
+		//printMazeVisited(maze, visited)
 
 		forward := getForward(closest, dir)
 		left := getLeft(closest, dir)
@@ -104,8 +106,9 @@ func shortestPath(start, end Pos, maze [][]rune, distances map[string]int) (int,
 		// Forward
 		h := hash(forward)
 		_, ok := visited[h]
-		if !ok && distances[h] < math.MaxInt {
-			d := distances[cHash] + 1
+		od, _ := distances[h]
+		if !ok && od < math.MaxInt {
+			d := min(distances[cHash]+1, od)
 			distances[h] = d
 			heap.Push(&pq, &utils.Item{
 				Value:    forward,
@@ -117,8 +120,9 @@ func shortestPath(start, end Pos, maze [][]rune, distances map[string]int) (int,
 		// Right
 		h = hash(right)
 		_, ok = visited[h]
-		if !ok && distances[h] < math.MaxInt {
-			d := distances[cHash] + 1001
+		od, _ = distances[h]
+		if !ok && od < math.MaxInt {
+			d := min(distances[cHash]+1001, od)
 			distances[h] = d
 			heap.Push(&pq, &utils.Item{
 				Value:    right,
@@ -130,8 +134,9 @@ func shortestPath(start, end Pos, maze [][]rune, distances map[string]int) (int,
 		// Left
 		h = hash(left)
 		_, ok = visited[h]
-		if !ok && distances[h] < math.MaxInt {
-			d := distances[cHash] + 1001
+		od, _ = distances[h]
+		if !ok && od < math.MaxInt {
+			d := min(distances[cHash]+1001, od)
 			distances[h] = d
 			heap.Push(&pq, &utils.Item{
 				Value:    left,
@@ -143,6 +148,44 @@ func shortestPath(start, end Pos, maze [][]rune, distances map[string]int) (int,
 				directions[h] = dir - 1
 			}
 
+		}
+
+		//fmt.Println(distances[hash(Pos{7, 4})])
+	}
+}
+
+// 7|5: 3009
+// 7|4: 4011
+
+func walk(p, end Pos, distances map[string]int, visited map[string]bool, maze [][]rune) {
+	visited[hash(p)] = true
+	//printMazeVisited(maze, visited)
+	if p == end {
+		return
+	}
+	neighbours := []Pos{
+		{p.i - 1, p.j},
+		{p.i, p.j + 1},
+		{p.i + 1, p.j},
+		{p.i, p.j - 1},
+	}
+	minDist := math.MaxInt
+	for _, np := range neighbours {
+		d, ok := distances[hash(np)]
+		if ok {
+			if d < minDist {
+				minDist = d
+			}
+		}
+	}
+	for _, np := range neighbours {
+		d, ok := distances[hash(np)]
+		_, v := visited[hash(np)]
+		if ok {
+			if d == minDist && !v {
+				//fmt.Println(hash(p))
+				walk(np, end, distances, visited, maze)
+			}
 		}
 	}
 }
@@ -244,9 +287,13 @@ func main() {
 		maze = append(maze, row)
 	}
 
-	d, newDistances, _ := shortestPath(startPos, endPos, maze, distances)
-	_, _, visited := shortestPath(startPos, endPos, maze, newDistances)
+	d, newDists := shortestPath(startPos, endPos, maze, distances)
 
-	printMazeVisited(maze, visited)
+	visited := make(map[string]bool)
+	walk(endPos, startPos, newDists, visited, maze)
+
+	//printMazeVisited(maze, visited)
 	fmt.Println(d)
+	//fmt.Println(visited)
+	fmt.Println(len(visited))
 }
