@@ -31,12 +31,6 @@ func getNeighbours(p Pos) []Pos {
 	}
 }
 
-func getHeuristic(origin, destination Pos) int {
-	dx := origin.x + destination.x
-	dy := origin.y + destination.y
-	return dx + dy
-}
-
 func shortestPath(start, end Pos, size int, distances map[string]int) int {
 	debugIdx := 0
 
@@ -51,11 +45,10 @@ func shortestPath(start, end Pos, size int, distances map[string]int) int {
 
 	for {
 		if pq.Len() == 0 {
-			panic("no squares in pq")
+			return -1
 		}
 		closest := heap.Pop(&pq).(*utils.Item).Value.(Pos)
 		if closest == end {
-			fmt.Println(debugIdx)
 			return distances[hash(closest)]
 		}
 
@@ -70,17 +63,11 @@ func shortestPath(start, end Pos, size int, distances map[string]int) int {
 			if insideMemory(nb, size) && !vOk && distances[h] < math.MaxInt && (!dOk || d < od) {
 				distances[h] = d
 				heap.Push(&pq, &utils.Item{
-					Value: nb,
-					//Priority: d + getHeuristic(closest, nb),
+					Value:    nb,
 					Priority: d,
 				})
 			}
 		}
-		//if debugIdx%1000 == 0 {
-		//	printBytesVisited(size, distances, visited)
-		//	fmt.Println("--------------------------------------------------------------")
-		//}
-
 		debugIdx++
 	}
 }
@@ -113,25 +100,27 @@ func main() {
 		panic(err)
 	}
 
-	nBytes := 1024
 	size := 71
-	//nBytes := 12
-	//size := 7
+	start := Pos{0, 0}
+	end := Pos{size - 1, size - 1}
 
 	re := regexp.MustCompile(`(\d+),(\d+)`)
-	//bytes := make([]Pos, 0)
+
 	distances := make(map[string]int)
-	for i := range nBytes {
+	for i := range len(lines) {
 		match := re.FindStringSubmatch(lines[i])
 		x, _ := strconv.Atoi(match[1])
 		y, _ := strconv.Atoi(match[2])
 		p := Pos{x, y}
-		//bytes = append(bytes, p)
 		distances[hash(p)] = math.MaxInt
+		tempDist := make(map[string]int)
+		for k, v := range distances {
+			tempDist[k] = v
+		}
+		d := shortestPath(start, end, size, tempDist)
+		if d == -1 {
+			fmt.Println(fmt.Sprintf("%d,%d", x, y))
+			break
+		}
 	}
-	start := Pos{0, 0}
-	end := Pos{size - 1, size - 1}
-	d := shortestPath(start, end, size, distances)
-
-	fmt.Println(d)
 }
