@@ -141,13 +141,15 @@ func main() {
 		instructions = append(instructions, i)
 	}
 
-	A := uint64(0)
+	A := uint64(109020000000000)
 	B := uint64(0)
 	C := uint64(0)
 	for {
-		//fmt.Println(A)
 		a := A
 		output := runProgram(&a, &B, &C, instructions)
+		if A%100000000 == 0 {
+			fmt.Println(fmt.Sprintf("%d: %x (%d)", A, output, len(output)))
+		}
 		if slices.Equal(output, instructions) {
 			break
 		}
