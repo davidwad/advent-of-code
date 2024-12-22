@@ -1,0 +1,92 @@
+Explanation: top row is the expected output, bottom is actual
+
+---------------------------------------------------------------------------------------
+<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
+<v<A>A<A>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
+
+<v
+A<A
+<A>A<
+A>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
+---------------------------------------------------------------------------------------
+<v<A>>^AAAvA^A<vA<AA>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A
+<v<A>>^AAAvA^A<v<A>A<A>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A
+
+<v<A>>^AAAvA^A<v
+A<A
+<A>A<
+A>>^AvAA<^A>A<v<A>A>^AAAvA<^A>A<vA>^A<A>A
+---------------------------------------------------------------------------------------
+<v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+<v<A>A<A>>^AvA<^A>A<vA<A>>^AvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+
+<v<A>
+>^A<vA<A>>^A
+A<A>>^AvA<^A>A<vA<A>>^
+AvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+---------------------------------------------------------------------------------------
+
+-- MINE --
+029A
+<A^A>^^AvvvA
+v<<A>>^A<A>AvA<^AA>Av<AAA>^A
+v<A<AA>>^AvAA<^A>Av<<A>>^AvA^Av<A>^Av<<A>^A>AAvA^Av<A<A>>^AAAvA<^A>A
+
+-- CORRECT --
+029A
+<A^A>^^AvvvA
+v<<A>>^A<A>AvA<^AA>A<vAAA>^A
+<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A
+
+
+<v<A >A <A
+< v <
+
+<vA <A A
+v < <
+
+
+v<<A >>^A vA ^A v<<A >>^A A v<A <A >>^A A vA A <^A >A v<A>^AA<A>Av<A<A>>^AAAvA<^A>A
+<A >A <A A v<A A >>^A
+^A^^<<A
+37
+
+<v<A >>^A vA ^A <vA <A A >>^A A vA <^A >A A vA ^A <vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+<A >A v<<A A >^A >>^v
+^A<<^
+3
+
+v<<A>>^A
+<vA<A
+
+<A>A| < A |Av<AA>>^AvAA^Av<AAA>^A
+
+
+<v<A    <
+>>^A    A
+vA      >
+^A      A
+<vA     v
+<A      <
+A       <
+>>^A    A
+A       A
+vA      >
+<^A     ^
+>A      A
+A       A
+vA      >
+^A
+<vA
+>^A
+A
+<A
+>A
+<v<A
+>A
+>^A
+A
+A
+vA
+<^A
+>A
